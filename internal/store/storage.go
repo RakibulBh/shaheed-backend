@@ -21,10 +21,15 @@ type Storage struct {
 		// Update(ctx context.Context, question *Question) error
 		// Delete(ctx context.Context, id string) error
 	}
+	Auth interface {
+		HashPassword(password string) (string, error)
+		Register(ctx context.Context, request RegisterRequest) error
+	}
 }
 
 func NewStorage(db *sql.DB) Storage {
 	return Storage{
 		Questions: &QuestionStore{db: db},
+		Auth:      &AuthStore{db: db},
 	}
 }

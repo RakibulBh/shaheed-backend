@@ -49,6 +49,9 @@ func (app *application) mount() http.Handler {
 			r.Put("/{id}", app.UpdateQuestion)
 			r.Delete("/{id}", app.DeleteQuestion)
 		})
+		r.Route("/auth", func(r chi.Router) {
+			r.Post("/register", app.Register)
+		})
 	})
 
 	return r
