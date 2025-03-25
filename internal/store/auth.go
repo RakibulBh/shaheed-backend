@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"database/sql"
+	"errors"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -41,4 +42,19 @@ func (s *AuthStore) HashPassword(password string) (string, error) {
 	}
 
 	return string(bytes), nil
+}
+
+func (s *AuthStore) VerifyPassword(password string, hash string) (bool, error) {
+
+	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+	if err != nil {
+		switch err {
+		case bcrypt.ErrMismatchedHashAndPassword:
+			return false, errors.New("invalid credentials")
+		default:
+			return false, err
+		}
+	}
+
+	return true, nil
 }

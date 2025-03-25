@@ -27,6 +27,18 @@ func (app *application) Register(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 
+	// Check if email exists already
+	_, err = app.store.User.GetUserByEmail(ctx, payload.Email)
+	if err != nil {
+		switch {
+		case errors.Is(err, store.ErrNoRows):
+			// do nothing
+		default:
+			app.internalServerErrorResponse(w, r, err)
+			return
+		}
+	}
+
 	// Validate the length of each field
 	if len(payload.FirstName) < 2 || len(payload.LastName) < 2 || len(payload.Email) < 5 || len(payload.Password) < 8 || payload.Password != payload.PasswordConfirm {
 		app.badRequestResponse(w, r, errors.New("invalid request payload"))
@@ -54,4 +66,49 @@ func (app *application) Register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	app.writeJSON(w, http.StatusOK, nil)
+}
+
+type LoginRequest struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+func (app *application) Login(w http.ResponseWriter, r *http.Request) {
+
+	// Parse the request
+	var payload LoginRequest
+	err := app.readJSON(w, r, &payload)
+	if err != nil {
+		app.badRequestResponse(w, r, err)
+		return
+	}
+
+	ctx := r.Context()
+
+	// Fetch user from the database
+	user, err := app.store.User.GetUserByEmail(ctx, payload.Email)
+	if err != nil {
+		switch {
+		case errors.Is(err, store.ErrNoRows):
+			app.badRequestResponse(w, r, errors.New("invalid credentials"))
+			return
+		default:
+			app.internalServerErrorResponse(w, r, err)
+			return
+		}
+	}
+
+	// Verify password matches with the database hash
+	passwordMatches, err := app.store.Auth.VerifyPassword(payload.Password, user.PasswordHash)
+	if err != nil {
+		app.internalServerErrorResponse(w, r, err)
+		return
+	}
+
+	if !passwordMatches {
+		app.badRequestResponse(w, r, errors.New("invalid credentials"))
+		return
+	}
+
+	app.writeJSON(w, http.StatusAccepted, nil)
 }
