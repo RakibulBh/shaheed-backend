@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/RakibulBh/shaheed-backend/internal/store"
-	"github.com/golang-jwt/jwt/v5"
 )
 
 type RegisterRequest struct {
@@ -21,7 +20,7 @@ func (app *application) Register(w http.ResponseWriter, r *http.Request) {
 
 	// Parse the request
 	var payload RegisterRequest
-	err := app.readJSON(w, r, &payload)
+	err := app.readJSON(r, &payload)
 	if err != nil {
 		app.badRequestResponse(w, r, err)
 		return
@@ -67,7 +66,7 @@ func (app *application) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	app.writeJSON(w, http.StatusOK, nil)
+	app.writeJSON(w, http.StatusCreated, "registered successfully", nil)
 }
 
 type LoginRequest struct {
@@ -79,7 +78,7 @@ func (app *application) Login(w http.ResponseWriter, r *http.Request) {
 
 	// Parse the request
 	var payload LoginRequest
-	err := app.readJSON(w, r, &payload)
+	err := app.readJSON(r, &payload)
 	if err != nil {
 		app.badRequestResponse(w, r, err)
 		return
@@ -113,43 +112,28 @@ func (app *application) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Generate a JWT token
-	token, err := app.GenerateJWT(user.ID)
+	accessToken, err := app.store.Auth.GenerateJWT(user.ID, time.Now().Add(app.config.auth.exp), app.config.auth.secret)
 	if err != nil {
 		app.internalServerErrorResponse(w, r, err)
 		return
 	}
 
-	app.writeJSON(w, http.StatusAccepted, map[string]string{
-		"token": token,
-	})
-}
-
-func (app *application) GenerateJWT(userID int) (string, error) {
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"user_id": userID,
-		"exp":     time.Now().Add(app.config.auth.exp).Unix(),
-	})
-
-	tokenString, err := token.SignedString([]byte(app.config.auth.secret))
+	// Generate a Refesh JWT token
+	refreshToken, err := app.store.Auth.GenerateJWT(user.ID, time.Now().Add(app.config.auth.refreshExp), app.config.auth.secret)
 	if err != nil {
-		return "", err
+		app.internalServerErrorResponse(w, r, err)
+		return
 	}
 
-	return tokenString, nil
-}
-
-func (app *application) VerifyToken(tokenString string) error {
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (any, error) {
-		return []byte(app.config.auth.secret), nil
-	})
-
+	// Store the refresh token in the database
+	err = app.store.Auth.StoreRefreshToken(ctx, user.ID, refreshToken, time.Now().Add(app.config.auth.refreshExp))
 	if err != nil {
-		return err
+		app.internalServerErrorResponse(w, r, err)
+		return
 	}
 
-	if !token.Valid {
-		return errors.New("invalid token")
-	}
-
-	return nil
+	app.writeJSON(w, http.StatusAccepted, "logged in successfully", map[string]string{
+		"access_token":  accessToken,
+		"refresh_token": refreshToken,
+	})
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"time"
 )
 
 // Errors
@@ -26,6 +27,9 @@ type Storage struct {
 		HashPassword(password string) (string, error)
 		Register(ctx context.Context, request RegisterRequest) error
 		VerifyPassword(password string, hash string) (bool, error)
+		GenerateJWT(userID int, expiresAt time.Time, secret string) (string, error)
+		VerifyToken(tokenString string, secret string) error
+		StoreRefreshToken(ctx context.Context, userID int, token string, expiresAt time.Time) error
 	}
 	User interface {
 		GetUserByEmail(ctx context.Context, email string) (User, error)

@@ -11,8 +11,6 @@ import (
 
 func main() {
 
-	// TODO: configure the projct
-
 	cfg := config{
 		addr:   ":" + env.GetString("PORT", "8080"),
 		apiURL: env.GetString("API_URL", "http://localhost:8080"),
@@ -24,8 +22,9 @@ func main() {
 		},
 		env: env.GetString("ENV", "development"),
 		auth: auth{
-			secret: env.GetString("AUTH_SECRET", "VERYSECRET"),
-			exp:    env.GetDuration("AUTH_EXP", time.Minute*15),
+			secret:     env.GetString("AUTH_SECRET", "VERYSECRET"),
+			exp:        env.GetDuration("AUTH_EXP", time.Minute*15),
+			refreshExp: env.GetDuration("AUTH_REFRESH_EXP", (time.Hour*24)*7), // 7 days
 		},
 	}
 

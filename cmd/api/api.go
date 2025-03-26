@@ -31,8 +31,9 @@ type config struct {
 }
 
 type auth struct {
-	secret string
-	exp    time.Duration
+	secret     string
+	exp        time.Duration
+	refreshExp time.Duration
 }
 
 func (app *application) mount() http.Handler {

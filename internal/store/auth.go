@@ -4,7 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"time"
 
+	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -27,6 +29,20 @@ func (s *AuthStore) Register(ctx context.Context, request RegisterRequest) error
 	`
 
 	_, err := s.db.ExecContext(ctx, query, request.FirstName, request.LastName, request.Email, request.PasswordHash)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *AuthStore) StoreRefreshToken(ctx context.Context, userID int, token string, expiresAt time.Time) error {
+	query := `
+		INSERT INTO refresh_tokens (user_id, token, expires_at)
+		VALUES ($1, $2, $3)
+	`
+
+	_, err := s.db.ExecContext(ctx, query, userID, token, expiresAt)
 	if err != nil {
 		return err
 	}
@@ -57,4 +73,34 @@ func (s *AuthStore) VerifyPassword(password string, hash string) (bool, error) {
 	}
 
 	return true, nil
+}
+
+func (s *AuthStore) GenerateJWT(userID int, expiresAt time.Time, secret string) (string, error) {
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"user_id": userID,
+		"exp":     expiresAt.Unix(),
+	})
+
+	tokenString, err := token.SignedString([]byte(secret))
+	if err != nil {
+		return "", err
+	}
+
+	return tokenString, nil
+}
+
+func (s *AuthStore) VerifyToken(tokenString string, secret string) error {
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (any, error) {
+		return []byte(secret), nil
+	})
+
+	if err != nil {
+		return err
+	}
+
+	if !token.Valid {
+		return errors.New("invalid token")
+	}
+
+	return nil
 }
