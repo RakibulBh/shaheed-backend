@@ -3,8 +3,10 @@ package main
 import (
 	"errors"
 	"net/http"
+	"time"
 
 	"github.com/RakibulBh/shaheed-backend/internal/store"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 type RegisterRequest struct {
@@ -110,5 +112,44 @@ func (app *application) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	app.writeJSON(w, http.StatusAccepted, nil)
+	// Generate a JWT token
+	token, err := app.GenerateJWT(user.ID)
+	if err != nil {
+		app.internalServerErrorResponse(w, r, err)
+		return
+	}
+
+	app.writeJSON(w, http.StatusAccepted, map[string]string{
+		"token": token,
+	})
+}
+
+func (app *application) GenerateJWT(userID int) (string, error) {
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"user_id": userID,
+		"exp":     time.Now().Add(app.config.auth.exp).Unix(),
+	})
+
+	tokenString, err := token.SignedString([]byte(app.config.auth.secret))
+	if err != nil {
+		return "", err
+	}
+
+	return tokenString, nil
+}
+
+func (app *application) VerifyToken(tokenString string) error {
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (any, error) {
+		return []byte(app.config.auth.secret), nil
+	})
+
+	if err != nil {
+		return err
+	}
+
+	if !token.Valid {
+		return errors.New("invalid token")
+	}
+
+	return nil
 }

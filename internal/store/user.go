@@ -11,19 +11,23 @@ type UserStore struct {
 }
 
 type User struct {
+	ID           int
+	FirstName    string
+	LastName     string
+	Email        string
 	PasswordHash string
 }
 
 func (s *UserStore) GetUserByEmail(ctx context.Context, email string) (User, error) {
 
 	query := `
-	SELECT password_hash
+	SELECT id, first_name, last_name, email, password_hash
 	FROM users
 	WHERE email = $1
 	`
 
 	var fecthedUser User
-	err := s.db.QueryRowContext(ctx, query, email).Scan(&fecthedUser.PasswordHash)
+	err := s.db.QueryRowContext(ctx, query, email).Scan(&fecthedUser.ID, &fecthedUser.FirstName, &fecthedUser.LastName, &fecthedUser.Email, &fecthedUser.PasswordHash)
 
 	if err != nil {
 		switch {

@@ -25,8 +25,14 @@ type dbConfig struct {
 type config struct {
 	addr   string
 	db     dbConfig
+	auth   auth
 	env    string
 	apiURL string
+}
+
+type auth struct {
+	secret string
+	exp    time.Duration
 }
 
 func (app *application) mount() http.Handler {

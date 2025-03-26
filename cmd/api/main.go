@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"time"
 
 	"github.com/RakibulBh/shaheed-backend/internal/db"
 	"github.com/RakibulBh/shaheed-backend/internal/env"
@@ -22,6 +23,10 @@ func main() {
 			maxIdleTime:  env.GetString("DB_MAX_IDLE_TIME", "10s"),
 		},
 		env: env.GetString("ENV", "development"),
+		auth: auth{
+			secret: env.GetString("AUTH_SECRET", "VERYSECRET"),
+			exp:    env.GetDuration("AUTH_EXP", time.Minute*15),
+		},
 	}
 
 	// Database

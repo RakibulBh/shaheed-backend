@@ -22,3 +22,7 @@ func (app *application) internalServerErrorResponse(w http.ResponseWriter, r *ht
 func (app *application) notFoundResponse(w http.ResponseWriter, r *http.Request, err error) {
 	app.errorJSON(w, err, http.StatusNotFound)
 }
+
+func (app *application) unauthorizedResponse(w http.ResponseWriter, r *http.Request, err error) {
+	app.errorJSON(w, err, http.StatusUnauthorized)
+}
