@@ -91,7 +91,7 @@ func (app *application) Login(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, store.ErrNoRows):
-			app.badRequestResponse(w, r, errors.New("invalid credentials"))
+			app.badRequestResponse(w, r, errors.New("user does not exist"))
 			return
 		default:
 			app.internalServerErrorResponse(w, r, err)
@@ -112,14 +112,14 @@ func (app *application) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Generate a JWT token
-	accessToken, err := app.store.Auth.GenerateJWT(user.ID, time.Now().Add(app.config.auth.exp), app.config.auth.secret)
+	accessToken, err := app.store.Auth.GenerateJWT(user.ID, time.Now().Add(app.config.auth.exp), app.config.auth.jwtSecret)
 	if err != nil {
 		app.internalServerErrorResponse(w, r, err)
 		return
 	}
 
 	// Generate a Refesh JWT token
-	refreshToken, err := app.store.Auth.GenerateJWT(user.ID, time.Now().Add(app.config.auth.refreshExp), app.config.auth.secret)
+	refreshToken, err := app.store.Auth.GenerateJWT(user.ID, time.Now().Add(app.config.auth.refreshExp), app.config.auth.jwtSecret)
 	if err != nil {
 		app.internalServerErrorResponse(w, r, err)
 		return
@@ -137,3 +137,9 @@ func (app *application) Login(w http.ResponseWriter, r *http.Request) {
 		"refresh_token": refreshToken,
 	})
 }
+
+// func (app *application) Logout(w http.ResponseWriter, r *http.Request) {
+// 	_ = r.Context()
+
+// 	return
+// }

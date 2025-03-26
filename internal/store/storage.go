@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"errors"
 	"time"
+
+	"github.com/golang-jwt/jwt/v5"
 )
 
 // Errors
@@ -28,11 +30,12 @@ type Storage struct {
 		Register(ctx context.Context, request RegisterRequest) error
 		VerifyPassword(password string, hash string) (bool, error)
 		GenerateJWT(userID int, expiresAt time.Time, secret string) (string, error)
-		VerifyToken(tokenString string, secret string) error
+		VerifyToken(tokenString string, secret string) (*jwt.Token, error)
 		StoreRefreshToken(ctx context.Context, userID int, token string, expiresAt time.Time) error
 	}
 	User interface {
-		GetUserByEmail(ctx context.Context, email string) (User, error)
+		GetUserByID(ctx context.Context, id int) (User, error)
+		GetUserByEmail(ctx context.Context, email string) (UserData, error)
 	}
 }
 

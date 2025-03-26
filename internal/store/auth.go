@@ -89,18 +89,18 @@ func (s *AuthStore) GenerateJWT(userID int, expiresAt time.Time, secret string) 
 	return tokenString, nil
 }
 
-func (s *AuthStore) VerifyToken(tokenString string, secret string) error {
+func (s *AuthStore) VerifyToken(tokenString string, secret string) (*jwt.Token, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (any, error) {
 		return []byte(secret), nil
 	})
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if !token.Valid {
-		return errors.New("invalid token")
+		return nil, errors.New("invalid token")
 	}
 
-	return nil
+	return token, nil
 }

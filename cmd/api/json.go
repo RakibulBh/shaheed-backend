@@ -46,9 +46,24 @@ func (app *application) readJSON(r *http.Request, data any) error {
 }
 
 func (app *application) errorJSON(w http.ResponseWriter, err error, statusCode int) error {
-	var payload jsonResponse
-	payload.Error = true
-	payload.Message = err.Error()
+	response := jsonResponse{
+		Error:   true,
+		Message: err.Error(),
+	}
 
-	return app.writeJSON(w, statusCode, err.Error(), payload)
+	js, err := json.Marshal(response)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return err
+	}
+
+	w.WriteHeader(statusCode)
+
+	_, err = w.Write(js)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return err
+	}
+
+	return nil
 }

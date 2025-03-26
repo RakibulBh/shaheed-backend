@@ -31,7 +31,7 @@ type config struct {
 }
 
 type auth struct {
-	secret     string
+	jwtSecret  string
 	exp        time.Duration
 	refreshExp time.Duration
 }
@@ -63,6 +63,7 @@ func (app *application) mount() http.Handler {
 
 	r.Route("/v1", func(r chi.Router) {
 		r.Route("/questions", func(r chi.Router) {
+			r.Use(app.Authenticate)
 			r.Post("/", app.PostQuestion)
 			r.Get("/", app.GetQuestions)
 			r.Get("/{id}", app.GetQuestion)
