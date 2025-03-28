@@ -78,7 +78,7 @@ func (app *application) mount() http.Handler {
 		r.Route("/auth", func(r chi.Router) {
 			r.Post("/register", app.Register)
 			r.Post("/login", app.Login)
-			r.Post("/logout", app.Logout)
+			// r.Post("/logout", app.Logout)
 			r.Get("/refresh", app.Refresh)
 		})
 	})

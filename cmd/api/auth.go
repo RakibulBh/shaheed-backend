@@ -142,10 +142,6 @@ func (app *application) Login(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (app *application) Logout(w http.ResponseWriter, r *http.Request) {
-	return
-}
-
 func (app *application) Refresh(w http.ResponseWriter, r *http.Request) {
 
 	refreshToken := r.Header.Get("Authorization")

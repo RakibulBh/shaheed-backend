@@ -21,9 +21,10 @@ var (
 type Storage struct {
 	Questions interface {
 		Create(ctx context.Context, userID int, content string, parentID int, location string) (*Question, error)
-		// Get(ctx context.Context, id string) (*Question, error)
-		// Update(ctx context.Context, question *Question) error
-		// Delete(ctx context.Context, id string) error
+		GetQuestions(ctx context.Context) ([]Question, error)
+		Get(ctx context.Context, id int) (*Question, error)
+		Update(ctx context.Context, question *Question) error
+		Delete(ctx context.Context, id int) error
 	}
 	Auth interface {
 		HashPassword(password string) (string, error)

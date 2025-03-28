@@ -2,8 +2,10 @@ package main
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/RakibulBh/shaheed-backend/internal/store"
+	"github.com/go-chi/chi/v5"
 )
 
 type QuestionRequest struct {
@@ -19,7 +21,7 @@ func (app *application) PostQuestion(w http.ResponseWriter, r *http.Request) {
 	var questionRequest QuestionRequest
 	err := app.readJSON(r, &questionRequest)
 	if err != nil {
-		app.errorJSON(w, err, http.StatusBadRequest)
+		app.badRequestResponse(w, r, err)
 		return
 	}
 
@@ -33,7 +35,7 @@ func (app *application) PostQuestion(w http.ResponseWriter, r *http.Request) {
 
 	question, err := app.store.Questions.Create(ctx, user.ID, questionRequest.Content, parentID, questionRequest.Location)
 	if err != nil {
-		app.errorJSON(w, err, http.StatusInternalServerError)
+		app.internalServerErrorResponse(w, r, err)
 		return
 	}
 
@@ -42,17 +44,89 @@ func (app *application) PostQuestion(w http.ResponseWriter, r *http.Request) {
 
 func (app *application) GetQuestions(w http.ResponseWriter, r *http.Request) {
 
-	app.writeJSON(w, http.StatusOK, "success", nil)
+	ctx := r.Context()
+
+	questions, err := app.store.Questions.GetQuestions(ctx)
+	if err != nil {
+		app.internalServerErrorResponse(w, r, err)
+		return
+	}
+
+	app.writeJSON(w, http.StatusOK, "success", questions)
 }
 
 func (app *application) GetQuestion(w http.ResponseWriter, r *http.Request) {
 
+	id := chi.URLParam(r, "id")
+
+	ctx := r.Context()
+
+	// Convert the id to an int
+	questionID, err := strconv.Atoi(id)
+	if err != nil {
+		app.badRequestResponse(w, r, err)
+		return
+	}
+
+	question, err := app.store.Questions.Get(ctx, questionID)
+	if err != nil {
+		app.internalServerErrorResponse(w, r, err)
+		return
+	}
+
+	app.writeJSON(w, http.StatusOK, "success", question)
 }
 
 func (app *application) UpdateQuestion(w http.ResponseWriter, r *http.Request) {
 
+	id := chi.URLParam(r, "id")
+
+	questionID, err := strconv.Atoi(id)
+	if err != nil {
+		app.badRequestResponse(w, r, err)
+		return
+	}
+
+	var questionRequest QuestionRequest
+	err = app.readJSON(r, &questionRequest)
+	if err != nil {
+		app.badRequestResponse(w, r, err)
+		return
+	}
+
+	ctx := r.Context()
+
+	question := &store.Question{
+		ID:       questionID,
+		Content:  questionRequest.Content,
+		Location: questionRequest.Location,
+	}
+	err = app.store.Questions.Update(ctx, question)
+	if err != nil {
+		app.internalServerErrorResponse(w, r, err)
+		return
+	}
+
+	app.writeJSON(w, http.StatusOK, "success", question)
 }
 
 func (app *application) DeleteQuestion(w http.ResponseWriter, r *http.Request) {
 
+	id := chi.URLParam(r, "id")
+
+	ctx := r.Context()
+
+	questionID, err := strconv.Atoi(id)
+	if err != nil {
+		app.badRequestResponse(w, r, err)
+		return
+	}
+
+	err = app.store.Questions.Delete(ctx, questionID)
+	if err != nil {
+		app.internalServerErrorResponse(w, r, err)
+		return
+	}
+
+	app.writeJSON(w, http.StatusOK, "success", "question deleted")
 }
