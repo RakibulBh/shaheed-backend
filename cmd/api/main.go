@@ -28,7 +28,7 @@ func main() {
 		},
 		llm: llmConfig{
 			model:  "gemini-2.0-flash-lite",
-			apiKey: env.GetString("GEMINI_API_KEY", ""),
+			apiKey: env.GetString("GEMINI_API_KEY", "API_KEY_HERE"),
 		},
 	}
 
