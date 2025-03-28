@@ -22,9 +22,15 @@ type dbConfig struct {
 	maxIdleTime  string
 }
 
+type llmConfig struct {
+	model  string
+	apiKey string
+}
+
 type config struct {
 	addr   string
 	db     dbConfig
+	llm    llmConfig
 	auth   auth
 	env    string
 	apiURL string

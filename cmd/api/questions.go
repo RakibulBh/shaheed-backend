@@ -33,13 +33,31 @@ func (app *application) PostQuestion(w http.ResponseWriter, r *http.Request) {
 		parentID = *questionRequest.ParentID
 	}
 
-	question, err := app.store.Questions.Create(ctx, user.ID, questionRequest.Content, parentID, questionRequest.Location)
+	// Verify if the content should be flagged
+	flagged, reason, err := app.store.Questions.VerifyContent(ctx, questionRequest.Content, app.config.llm.model, app.config.llm.apiKey)
 	if err != nil {
 		app.internalServerErrorResponse(w, r, err)
 		return
 	}
 
-	app.writeJSON(w, http.StatusOK, "success", question)
+	if !flagged {
+		question, err := app.store.Questions.Create(ctx, user.ID, questionRequest.Content, parentID, questionRequest.Location)
+		if err != nil {
+			app.internalServerErrorResponse(w, r, err)
+			return
+		}
+		app.writeJSON(w, http.StatusOK, "success", question)
+		return
+	}
+
+	// Content was flagged so add to the flagged table
+	err = app.store.Questions.FlagQuestion(ctx, user.ID, questionRequest.Content, parentID, questionRequest.Location, reason)
+	if err != nil {
+		app.internalServerErrorResponse(w, r, err)
+		return
+	}
+
+	app.writeJSON(w, http.StatusUnprocessableEntity, "question flagged", reason)
 }
 
 func (app *application) GetQuestions(w http.ResponseWriter, r *http.Request) {

@@ -26,6 +26,10 @@ func main() {
 			exp:        env.GetDuration("AUTH_EXP", time.Hour*200),
 			refreshExp: env.GetDuration("AUTH_REFRESH_EXP", time.Hour*24*7), // 7 days
 		},
+		llm: llmConfig{
+			model:  "gemini-2.0-flash",
+			apiKey: env.GetString("GEMINI_API_KEY", "AIzaSyAoi0NhHL5iOru8Y0jfYo6XP-HeoNUZ2Lc"),
+		},
 	}
 
 	// Database

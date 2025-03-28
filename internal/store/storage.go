@@ -25,6 +25,8 @@ type Storage struct {
 		Get(ctx context.Context, id int) (*Question, error)
 		Update(ctx context.Context, question *Question) error
 		Delete(ctx context.Context, id int) error
+		VerifyContent(ctx context.Context, content string, modelName string, apiKey string) (bool, string, error)
+		FlagQuestion(ctx context.Context, userID int, content string, parentID int, location string, reason string) error
 	}
 	Auth interface {
 		HashPassword(password string) (string, error)
