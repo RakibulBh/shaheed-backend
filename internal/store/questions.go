@@ -132,6 +132,7 @@ type llmRespomse struct {
 	Reason  string `json:"reason"`
 }
 
+// VerifyContent verifies the content of a question to be related to islam
 func (s *QuestionStore) VerifyContent(ctx context.Context, content string, modelName string, apiKey string) (bool, string, error) {
 
 	// LLM client
