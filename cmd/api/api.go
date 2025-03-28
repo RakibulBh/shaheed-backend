@@ -63,16 +63,23 @@ func (app *application) mount() http.Handler {
 
 	r.Route("/v1", func(r chi.Router) {
 		r.Route("/questions", func(r chi.Router) {
-			r.Use(app.Authenticate)
-			r.Post("/", app.PostQuestion)
 			r.Get("/", app.GetQuestions)
 			r.Get("/{id}", app.GetQuestion)
-			r.Put("/{id}", app.UpdateQuestion)
-			r.Delete("/{id}", app.DeleteQuestion)
+
+			// Require authentication
+			r.Group(func(r chi.Router) {
+				r.Use(app.Authenticate)
+				r.Post("/", app.PostQuestion)
+				r.Put("/{id}", app.UpdateQuestion)
+				r.Delete("/{id}", app.DeleteQuestion)
+			})
 		})
+
 		r.Route("/auth", func(r chi.Router) {
 			r.Post("/register", app.Register)
 			r.Post("/login", app.Login)
+			r.Post("/logout", app.Logout)
+			r.Get("/refresh", app.Refresh)
 		})
 	})
 

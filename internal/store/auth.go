@@ -104,3 +104,36 @@ func (s *AuthStore) VerifyToken(tokenString string, secret string) (*jwt.Token, 
 
 	return token, nil
 }
+
+func (s *AuthStore) RefreshToken(ctx context.Context, userID int, tokenString string, secret string, refreshExp time.Duration, accessExp time.Duration) (string, string, error) {
+
+	// Delete the old refresh token
+	query := `
+		DELETE FROM refresh_tokens
+		WHERE token = $1 AND user_id = $2
+	`
+	_, err := s.db.ExecContext(ctx, query, tokenString, userID)
+	if err != nil {
+		return "", "", err
+	}
+
+	// Generate a new refresh token
+	refreshToken, err := s.GenerateJWT(userID, time.Now().Add(refreshExp), secret)
+	if err != nil {
+		return "", "", err
+	}
+
+	// Store the new refresh token
+	err = s.StoreRefreshToken(ctx, userID, refreshToken, time.Now().Add(refreshExp))
+	if err != nil {
+		return "", "", err
+	}
+
+	// Generate a new access token
+	tokenString, err = s.GenerateJWT(userID, time.Now().Add(accessExp), secret)
+	if err != nil {
+		return "", "", err
+	}
+
+	return tokenString, refreshToken, nil
+}

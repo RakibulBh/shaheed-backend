@@ -2,10 +2,14 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/RakibulBh/shaheed-backend/internal/store"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 type RegisterRequest struct {
@@ -138,8 +142,59 @@ func (app *application) Login(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// func (app *application) Logout(w http.ResponseWriter, r *http.Request) {
-// 	_ = r.Context()
+func (app *application) Logout(w http.ResponseWriter, r *http.Request) {
+	return
+}
 
-// 	return
-// }
+func (app *application) Refresh(w http.ResponseWriter, r *http.Request) {
+
+	refreshToken := r.Header.Get("Authorization")
+	if refreshToken == "" {
+		app.badRequestResponse(w, r, errors.New("refresh token is required"))
+		return
+	}
+
+	parts := strings.Split(refreshToken, " ")
+	if len(parts) != 2 || parts[0] != "Bearer" {
+		app.badRequestResponse(w, r, errors.New("invalid refresh token"))
+		return
+	}
+
+	refreshToken = parts[1]
+
+	// Validate if the token is valid
+	jwtToken, err := app.store.Auth.VerifyToken(refreshToken, app.config.auth.jwtSecret)
+	if err != nil {
+		app.unauthorizedResponse(w, r, errors.New("invalid token"))
+		return
+	}
+
+	claims, ok := jwtToken.Claims.(jwt.MapClaims)
+	if !ok {
+		app.unauthorizedResponse(w, r, errors.New("invalid token"))
+		return
+	}
+
+	userID, err := strconv.ParseInt(fmt.Sprintf("%v", claims["user_id"]), 10, 64)
+	if err != nil {
+		app.unauthorizedResponse(w, r, errors.New("invalid token"))
+		return
+	}
+
+	ctx := r.Context()
+
+	// Verify the refresh token and regenerate
+	accessToken, refreshToken, err := app.store.Auth.RefreshToken(ctx, int(userID), refreshToken, app.config.auth.jwtSecret, app.config.auth.refreshExp, app.config.auth.exp)
+	if err != nil {
+		app.badRequestResponse(w, r, err)
+		return
+	}
+
+	err = app.writeJSON(w, http.StatusAccepted, "refreshed successfully", map[string]string{
+		"access_token":  accessToken,
+		"refresh_token": refreshToken,
+	})
+	if err != nil {
+		app.internalServerErrorResponse(w, r, err)
+	}
+}

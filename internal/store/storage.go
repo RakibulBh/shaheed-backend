@@ -20,7 +20,7 @@ var (
 
 type Storage struct {
 	Questions interface {
-		Create(ctx context.Context, question *Question) error
+		Create(ctx context.Context, userID int, content string, parentID int, location string) (*Question, error)
 		// Get(ctx context.Context, id string) (*Question, error)
 		// Update(ctx context.Context, question *Question) error
 		// Delete(ctx context.Context, id string) error
@@ -32,6 +32,7 @@ type Storage struct {
 		GenerateJWT(userID int, expiresAt time.Time, secret string) (string, error)
 		VerifyToken(tokenString string, secret string) (*jwt.Token, error)
 		StoreRefreshToken(ctx context.Context, userID int, token string, expiresAt time.Time) error
+		RefreshToken(ctx context.Context, userID int, tokenString string, secret string, refreshExp time.Duration, accessExp time.Duration) (string, string, error)
 	}
 	User interface {
 		GetUserByID(ctx context.Context, id int) (User, error)
