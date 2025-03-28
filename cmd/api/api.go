@@ -30,10 +30,18 @@ type llmConfig struct {
 type config struct {
 	addr   string
 	db     dbConfig
+	redis  redisConfig
 	llm    llmConfig
 	auth   auth
 	env    string
 	apiURL string
+}
+
+type redisConfig struct {
+	addr     string
+	password string
+	db       int
+	protocol int
 }
 
 type auth struct {

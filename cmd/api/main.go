@@ -6,6 +6,7 @@ import (
 
 	"github.com/RakibulBh/shaheed-backend/internal/db"
 	"github.com/RakibulBh/shaheed-backend/internal/env"
+	"github.com/RakibulBh/shaheed-backend/internal/redis"
 	"github.com/RakibulBh/shaheed-backend/internal/store"
 )
 
@@ -30,6 +31,12 @@ func main() {
 			model:  "gemini-2.0-flash-lite",
 			apiKey: env.GetString("GEMINI_API_KEY", "API_KEY_HERE"),
 		},
+		redis: redisConfig{
+			addr:     env.GetString("REDIS_ADDR", "localhost:6379"),
+			password: env.GetString("REDIS_PASSWORD", ""),
+			db:       env.GetInt("REDIS_DB", 0),
+			protocol: env.GetInt("REDIS_PROTOCOL", 2),
+		},
 	}
 
 	// Database
@@ -38,6 +45,13 @@ func main() {
 		log.Fatal(err)
 	}
 	defer db.Close()
+
+	// Redis
+	redis, err := redis.New(cfg.redis.addr, cfg.redis.password, cfg.redis.db, cfg.redis.protocol)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer redis.Close()
 
 	// Store
 	store := store.NewStorage(db)
