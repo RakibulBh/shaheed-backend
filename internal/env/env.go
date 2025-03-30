@@ -3,6 +3,7 @@ package env
 import (
 	"os"
 	"strconv"
+	"time"
 )
 
 func GetString(key string, fallback string) string {
@@ -34,6 +35,15 @@ func GetBool(key string, fallback bool) bool {
 
 func GetFloat64(key string, fallback float64) float64 {
 	value, err := strconv.ParseFloat(os.Getenv(key), 64)
+	if err != nil {
+		return fallback
+	}
+
+	return value
+}
+
+func GetDuration(key string, fallback time.Duration) time.Duration {
+	value, err := time.ParseDuration(os.Getenv(key))
 	if err != nil {
 		return fallback
 	}

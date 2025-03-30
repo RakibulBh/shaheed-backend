@@ -1,11 +1,28 @@
 package main
 
-import "errors"
+import (
+	"errors"
+	"net/http"
+)
 
 var (
-	ErrRecordNotFound     = errors.New("record not found")
-	ErrEditConflict       = errors.New("edit conflict")
 	ErrInvalidCredentials = errors.New("invalid credentials")
 	ErrDuplicateEmail     = errors.New("duplicate email")
 	ErrDuplicateUsername  = errors.New("duplicate username")
 )
+
+func (app *application) badRequestResponse(w http.ResponseWriter, r *http.Request, err error) {
+	app.errorJSON(w, err, http.StatusBadRequest)
+}
+
+func (app *application) internalServerErrorResponse(w http.ResponseWriter, r *http.Request, err error) {
+	app.errorJSON(w, err, http.StatusInternalServerError)
+}
+
+func (app *application) notFoundResponse(w http.ResponseWriter, r *http.Request, err error) {
+	app.errorJSON(w, err, http.StatusNotFound)
+}
+
+func (app *application) unauthorizedResponse(w http.ResponseWriter, r *http.Request, err error) {
+	app.errorJSON(w, err, http.StatusUnauthorized)
+}
